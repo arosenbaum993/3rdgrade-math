@@ -136,19 +136,24 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #f0f2f5; 
 <div id="configScreen">
   <div class="config-card">
     <h2>Connect to Google Sheet</h2>
-    <p>Enter the published CSV URL for your Grade 3 Math results sheet. The dashboard will load Section 1 and Section 2 data from the same sheet automatically.</p>
+    <p>You need two separate CSV URLs — one for each section tab. Follow these steps for each one.</p>
     <div class="setup-steps">
       <ol>
         <li>Open your Google Sheet with the simulation results</li>
         <li>Click <strong>File → Share → Publish to web</strong></li>
-        <li>Under "Link," select <strong>Entire Document</strong> and <strong>Comma-separated values (.csv)</strong></li>
-        <li>Click <strong>Publish</strong> and copy the URL</li>
-        <li>Paste the URL below and click Load Dashboard</li>
+        <li>Under the first dropdown, select <strong>"Gr3 Section 1"</strong> (not Entire Document)</li>
+        <li>Under the second dropdown, select <strong>Comma-separated values (.csv)</strong></li>
+        <li>Click <strong>Publish</strong> and copy the URL — paste it below</li>
+        <li>Repeat steps 3–5 for <strong>"Gr3 Section 2"</strong></li>
       </ol>
     </div>
     <div class="form-group">
-      <label>Published CSV URL</label>
-      <input type="text" id="csvUrl" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv">
+      <label>Section 1 CSV URL (Gr3 Section 1 tab)</label>
+      <input type="text" id="csvUrl1" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=...&single=true&output=csv">
+    </div>
+    <div class="form-group">
+      <label>Section 2 CSV URL (Gr3 Section 2 tab)</label>
+      <input type="text" id="csvUrl2" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=...&single=true&output=csv">
     </div>
     <button class="load-btn" onclick="loadDashboard()">Load Dashboard</button>
     <div class="error-msg" id="errorMsg"></div>
@@ -173,7 +178,7 @@ body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #f0f2f5; 
       </select>
       <label>Search:</label>
       <input type="text" id="filterSearch" placeholder="Student name..." oninput="applyFilters()">
-      <button class="refresh-btn" onclick="loadDashboard()">↻ Refresh</button>
+      <button class="refresh-btn" onclick="refreshDashboard()">↻ Refresh</button>
       <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
     </div>
 
@@ -239,9 +244,10 @@ let allData1 = [];   // Section 1 rows
 let allData2 = [];   // Section 2 rows
 let filteredData = [];
 let activeSection = 1;
-let csvUrlStr = '';
 let charts = {};
 let sortState = { column: 'timestamp', direction: 'desc' };
+
+function refreshDashboard() { loadDashboard(); }
 
 // ============================================================
 // SECTION CONFIG
@@ -274,38 +280,33 @@ const SECTION_CONFIG = {
 // ============================================================
 // LOAD DATA
 // ============================================================
+let csvUrl1Str = '';
+let csvUrl2Str = '';
+
 function loadDashboard() {
-  const url = document.getElementById('csvUrl')?.value?.trim() || csvUrlStr;
-  if (!url) { showError('Please enter a published CSV URL.'); return; }
-  csvUrlStr = url;
+  const url1 = document.getElementById('csvUrl1')?.value?.trim() || csvUrl1Str;
+  const url2 = document.getElementById('csvUrl2')?.value?.trim() || csvUrl2Str;
+  if (!url1 && !url2) { showError('Please enter at least one CSV URL.'); return; }
+  csvUrl1Str = url1;
+  csvUrl2Str = url2;
 
-  // Fetch ALL sheets — the CSV URL gives us sheet 1; we'll try gid=0 and gid=1
-  // Strategy: fetch the base URL (will get the first sheet by default, which may be sorted)
-  // Then fetch with gid params for each sheet.
-  // Since GAS writes Section 1 to "Gr3 Section 1" and Section 2 to "Gr3 Section 2",
-  // we need to fetch both sheets. We'll try appending &gid=0 and &gid=1 (or &sheet= name).
-  // The simpler approach: parse all rows and split on the 'section' column.
+  const fetches = [];
+  if (url1) fetches.push(fetch(url1).then(r => r.text()).then(text => ({ section: '1', text })));
+  if (url2) fetches.push(fetch(url2).then(r => r.text()).then(text => ({ section: '2', text })));
 
-  const baseUrl = url.includes('?') ? url.split('?')[0] : url;
-  const fetchUrl = baseUrl + '?output=csv&gid=0';
-  const fetchUrl2 = baseUrl + '?output=csv&gid=1';
-
-  Promise.allSettled([
-    fetch(fetchUrl).then(r => r.text()),
-    fetch(fetchUrl2).then(r => r.text())
-  ]).then(results => {
+  Promise.allSettled(fetches).then(results => {
     allData1 = [];
     allData2 = [];
 
-    results.forEach((result, idx) => {
+    results.forEach(result => {
       if (result.status !== 'fulfilled') return;
-      const parsed = Papa.parse(result.value, { header: true, skipEmptyLines: true });
+      const { section, text } = result.value;
+      const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
       const rows = parsed.data.map(parseRow).filter(r => r !== null);
-      if (idx === 0) allData1 = rows.filter(r => r.section === '1' || r.section === '');
-      else allData2 = rows.filter(r => r.section === '2');
+      if (section === '1') allData1 = rows;
+      else allData2 = rows;
     });
 
-    // If gid split didn't separate them, try splitting by section column
     if (allData1.length === 0 && allData2.length === 0) {
       const allRows = [...allData1, ...allData2];
       allData1 = allRows.filter(r => r.section === '1');
