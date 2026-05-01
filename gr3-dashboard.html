@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grade 3 Math — Teacher Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #f0f2f5; color: #222; min-height: 100vh; }
+
+.header { background: linear-gradient(135deg, #1a3d6e 0%, #2e5a8f 100%); color: #fff; padding: 18px 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.header h1 { font-size: 20px; margin-bottom: 2px; }
+.header .subtitle { font-size: 13px; opacity: 0.85; }
+.header-spacer { flex: 1; }
+.section-toggle { display: flex; background: rgba(255,255,255,0.15); border-radius: 8px; overflow: hidden; }
+.section-tab { padding: 8px 20px; cursor: pointer; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.7); transition: all 0.2s; border: none; background: transparent; }
+.section-tab.active { background: #fff; color: #1a3d6e; }
+.section-tab:hover:not(.active) { color: #fff; background: rgba(255,255,255,0.1); }
+
+#configScreen { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 70px); padding: 20px; }
+.config-card { background: #fff; border-radius: 12px; padding: 40px; max-width: 640px; width: 100%; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border-top: 6px solid #1a5490; }
+.config-card h2 { color: #1a5490; font-size: 22px; margin-bottom: 8px; }
+.config-card p { color: #666; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+.setup-steps { background: #f8f9fa; border-left: 4px solid #1a5490; padding: 16px 20px; margin-bottom: 24px; border-radius: 4px; font-size: 14px; line-height: 1.8; }
+.setup-steps ol { padding-left: 20px; }
+.setup-steps li { margin-bottom: 4px; }
+.setup-steps strong { color: #1a5490; }
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; font-weight: 600; margin-bottom: 6px; color: #333; font-size: 14px; }
+.form-group input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; font-family: 'SF Mono', Consolas, monospace; }
+.form-group input:focus { outline: none; border-color: #1a5490; }
+.load-btn { width: 100%; background: #1a5490; color: #fff; border: none; padding: 14px; font-size: 16px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+.load-btn:hover { background: #143d6a; }
+.error-msg { color: #c62828; background: #ffebee; padding: 10px 14px; border-radius: 4px; margin-top: 12px; font-size: 13px; display: none; }
+.error-msg.show { display: block; }
+
+#dashboardScreen { display: none; }
+.dash-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+.filter-bar { background: #fff; padding: 14px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.filter-bar label { font-weight: 600; color: #333; font-size: 13px; }
+.filter-bar select, .filter-bar input { padding: 7px 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 13px; font-family: inherit; }
+.filter-bar select:focus, .filter-bar input:focus { outline: none; border-color: #1a5490; }
+.refresh-btn { background: #1a5490; color: #fff; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: 600; margin-left: auto; }
+.refresh-btn:hover { background: #143d6a; }
+.export-btn { background: #2e7d32; color: #fff; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: 600; }
+.export-btn:hover { background: #1b5e20; }
+
+.section-label-bar { background: #e8eef5; border-radius: 6px; padding: 8px 16px; margin-bottom: 16px; font-size: 13px; font-weight: 700; color: #1a3d6e; display: flex; align-items: center; gap: 8px; }
+.section-pill { background: #1a5490; color: #fff; padding: 2px 10px; border-radius: 10px; font-size: 12px; }
+.section-pill.s2 { background: #2e7d32; }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.kpi-card { background: #fff; padding: 18px; border-radius: 8px; border-left: 4px solid #1a5490; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.kpi-card .label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 6px; }
+.kpi-card .value { font-size: 30px; font-weight: 800; color: #1a3d6e; line-height: 1; }
+.kpi-card .sub { font-size: 12px; color: #666; margin-top: 4px; }
+.kpi-card.distinguished { border-left-color: #2e7d32; }
+.kpi-card.proficient { border-left-color: #1a5490; }
+.kpi-card.developing { border-left-color: #f9a825; }
+.kpi-card.beginning { border-left-color: #c62828; }
+
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px; }
+.chart-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.chart-card h3 { color: #1a3d6e; font-size: 14px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #1a5490; }
+.chart-container { position: relative; height: 280px; }
+
+.full-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 20px; }
+.full-card h3 { color: #1a3d6e; font-size: 14px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #1a5490; display: flex; justify-content: space-between; align-items: center; }
+
+.student-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.student-table thead { background: #1a3d6e; color: #fff; }
+.student-table th { padding: 10px 12px; text-align: left; font-size: 12px; font-weight: 600; cursor: pointer; user-select: none; white-space: nowrap; }
+.student-table th:hover { background: #0f2a4d; }
+.student-table th.sorted-asc::after { content: ' ▲'; }
+.student-table th.sorted-desc::after { content: ' ▼'; }
+.student-table td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+.student-table tr:hover td { background: #f8fafc; }
+.student-table .name { font-weight: 600; color: #1a3d6e; }
+
+.level-badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+.level-badge.distinguished { background: #e8f5e9; color: #2e7d32; }
+.level-badge.proficient { background: #e3f2fd; color: #1565c0; }
+.level-badge.developing { background: #fff8e1; color: #f57f17; }
+.level-badge.beginning { background: #ffebee; color: #c62828; }
+
+.mini-bar { height: 6px; background: #e8eef5; border-radius: 3px; margin-top: 3px; overflow: hidden; }
+.mini-bar-fill { height: 100%; background: #1a5490; border-radius: 3px; }
+
+.weakness-list { list-style: none; }
+.weakness-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eee; }
+.weakness-rank { width: 26px; height: 26px; border-radius: 50%; background: #e8eef5; color: #1a3d6e; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+.weakness-rank.top-3 { background: #c62828; color: #fff; }
+.weakness-name { font-size: 13px; color: #333; min-width: 220px; flex: 1; }
+.weakness-bar { flex: 2; height: 10px; background: #e8eef5; border-radius: 5px; overflow: hidden; }
+.weakness-bar-fill { height: 100%; border-radius: 5px; }
+.weakness-score { font-size: 13px; font-weight: 700; min-width: 50px; text-align: right; }
+
+.heatmap-grid { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.heatmap-cell { width: 44px; height: 44px; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; cursor: default; transition: transform 0.1s; }
+.heatmap-cell:hover { transform: scale(1.1); }
+.q-num { font-size: 10px; font-weight: 700; }
+.flag-count { font-size: 12px; font-weight: 800; }
+.heat-0 { background: #f5f5f5; color: #999; }
+.heat-1 { background: #fff9c4; color: #795548; }
+.heat-2 { background: #ffe082; color: #5d4037; }
+.heat-3 { background: #ffb300; color: #3e2723; }
+.heat-4 { background: #f57c00; color: #fff; }
+.heat-5 { background: #c62828; color: #fff; }
+
+.no-data { text-align: center; padding: 60px 20px; color: #999; font-size: 15px; }
+
+@media (max-width: 900px) {
+  .chart-grid { grid-template-columns: 1fr; }
+  .filter-bar { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Grade 3 Mathematics — Teacher Dashboard</h1>
+    <div class="subtitle">Georgia Milestones Practice Simulation · McIntosh County Schools</div>
+  </div>
+  <div class="header-spacer"></div>
+  <div class="section-toggle" id="sectionToggle" style="display:none;">
+    <button class="section-tab active" id="tab1" onclick="switchSection(1)">Section 1: Numbers &amp; Operations</button>
+    <button class="section-tab" id="tab2" onclick="switchSection(2)">Section 2: Measurement &amp; Geometry</button>
+  </div>
+</div>
+
+<!-- CONFIG SCREEN -->
+<div id="configScreen">
+  <div class="config-card">
+    <h2>Connect to Google Sheet</h2>
+    <p>Enter the published CSV URL for your Grade 3 Math results sheet. The dashboard will load Section 1 and Section 2 data from the same sheet automatically.</p>
+    <div class="setup-steps">
+      <ol>
+        <li>Open your Google Sheet with the simulation results</li>
+        <li>Click <strong>File → Share → Publish to web</strong></li>
+        <li>Under "Link," select <strong>Entire Document</strong> and <strong>Comma-separated values (.csv)</strong></li>
+        <li>Click <strong>Publish</strong> and copy the URL</li>
+        <li>Paste the URL below and click Load Dashboard</li>
+      </ol>
+    </div>
+    <div class="form-group">
+      <label>Published CSV URL</label>
+      <input type="text" id="csvUrl" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv">
+    </div>
+    <button class="load-btn" onclick="loadDashboard()">Load Dashboard</button>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD SCREEN -->
+<div id="dashboardScreen">
+  <div class="dash-container">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <label>Period:</label>
+      <select id="filterPeriod" onchange="applyFilters()">
+        <option value="all">All Periods</option>
+        <option value="1">Period 1</option>
+        <option value="2">Period 2</option>
+        <option value="3">Period 3</option>
+        <option value="4">Period 4</option>
+        <option value="5">Period 5</option>
+        <option value="6">Period 6</option>
+        <option value="7">Period 7</option>
+      </select>
+      <label>Search:</label>
+      <input type="text" id="filterSearch" placeholder="Student name..." oninput="applyFilters()">
+      <button class="refresh-btn" onclick="loadDashboard()">↻ Refresh</button>
+      <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+    </div>
+
+    <!-- Section Label -->
+    <div class="section-label-bar" id="sectionLabelBar">
+      <span class="section-pill" id="sectionPill">Section 1</span>
+      <span id="sectionLabelText">Numbers &amp; Operations — 3.NR.1 · 3.NR.4 · 3.PAR.2 · 3.PAR.3</span>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- Charts -->
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3 id="standardChartTitle">Standard Breakdown</h3>
+        <div class="chart-container"><canvas id="standardChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>DOK Level Performance</h3>
+        <div class="chart-container"><canvas id="dokChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Score Distribution</h3>
+        <div class="chart-container"><canvas id="histogramChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Achievement Level Breakdown</h3>
+        <div class="chart-container"><canvas id="levelChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Weakness Ranking -->
+    <div class="full-card">
+      <h3>Standard Weakness Ranking <span style="font-weight:400;font-size:12px;color:#666;">Sorted lowest → highest class average</span></h3>
+      <ul class="weakness-list" id="weaknessList"></ul>
+    </div>
+
+    <!-- Vocab Heatmap -->
+    <div class="full-card">
+      <h3>Vocabulary Flag Heatmap <span style="font-weight:400;font-size:12px;color:#666;">Items flagged most often = deeper red</span></h3>
+      <div class="heatmap-grid" id="vocabHeatmap"></div>
+    </div>
+
+    <!-- Student Table -->
+    <div class="full-card">
+      <h3>Individual Student Results <span style="font-size:12px;font-weight:400;color:#666;" id="studentCount"></span></h3>
+      <div style="overflow-x:auto;">
+        <table class="student-table">
+          <thead id="studentTableHead"></thead>
+          <tbody id="studentTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let allData1 = [];   // Section 1 rows
+let allData2 = [];   // Section 2 rows
+let filteredData = [];
+let activeSection = 1;
+let csvUrlStr = '';
+let charts = {};
+let sortState = { column: 'timestamp', direction: 'desc' };
+
+// ============================================================
+// SECTION CONFIG
+// ============================================================
+const SECTION_CONFIG = {
+  1: {
+    label: 'Section 1',
+    pillClass: '',
+    labelText: 'Numbers & Operations — 3.NR.1 · 3.NR.4 · 3.PAR.2 · 3.PAR.3',
+    standards: [
+      { key: 'nr1Pct',  name: '3.NR.1 Place Value',      score: 'nr1Score' },
+      { key: 'nr4Pct',  name: '3.NR.4 Fractions',         score: 'nr4Score' },
+      { key: 'par2Pct', name: '3.PAR.2 Add & Subtract',   score: 'par2Score' },
+      { key: 'par3Pct', name: '3.PAR.3 Multiply & Divide', score: 'par3Score' }
+    ]
+  },
+  2: {
+    label: 'Section 2',
+    pillClass: 's2',
+    labelText: 'Measurement & Geometry — 3.MDR.5 · 3.GSR.6 · 3.GSR.7 · 3.GSR.8',
+    standards: [
+      { key: 'mdr5Pct', name: '3.MDR.5 Measurement & Data', score: 'mdr5Score' },
+      { key: 'gsr6Pct', name: '3.GSR.6 Polygon Attributes',  score: 'gsr6Score' },
+      { key: 'gsr7Pct', name: '3.GSR.7 Area',                score: 'gsr7Score' },
+      { key: 'gsr8Pct', name: '3.GSR.8 Perimeter',           score: 'gsr8Score' }
+    ]
+  }
+};
+
+// ============================================================
+// LOAD DATA
+// ============================================================
+function loadDashboard() {
+  const url = document.getElementById('csvUrl')?.value?.trim() || csvUrlStr;
+  if (!url) { showError('Please enter a published CSV URL.'); return; }
+  csvUrlStr = url;
+
+  // Fetch ALL sheets — the CSV URL gives us sheet 1; we'll try gid=0 and gid=1
+  // Strategy: fetch the base URL (will get the first sheet by default, which may be sorted)
+  // Then fetch with gid params for each sheet.
+  // Since GAS writes Section 1 to "Gr3 Section 1" and Section 2 to "Gr3 Section 2",
+  // we need to fetch both sheets. We'll try appending &gid=0 and &gid=1 (or &sheet= name).
+  // The simpler approach: parse all rows and split on the 'section' column.
+
+  const baseUrl = url.includes('?') ? url.split('?')[0] : url;
+  const fetchUrl = baseUrl + '?output=csv&gid=0';
+  const fetchUrl2 = baseUrl + '?output=csv&gid=1';
+
+  Promise.allSettled([
+    fetch(fetchUrl).then(r => r.text()),
+    fetch(fetchUrl2).then(r => r.text())
+  ]).then(results => {
+    allData1 = [];
+    allData2 = [];
+
+    results.forEach((result, idx) => {
+      if (result.status !== 'fulfilled') return;
+      const parsed = Papa.parse(result.value, { header: true, skipEmptyLines: true });
+      const rows = parsed.data.map(parseRow).filter(r => r !== null);
+      if (idx === 0) allData1 = rows.filter(r => r.section === '1' || r.section === '');
+      else allData2 = rows.filter(r => r.section === '2');
+    });
+
+    // If gid split didn't separate them, try splitting by section column
+    if (allData1.length === 0 && allData2.length === 0) {
+      const allRows = [...allData1, ...allData2];
+      allData1 = allRows.filter(r => r.section === '1');
+      allData2 = allRows.filter(r => r.section === '2');
+    }
+
+    showError('');
+    document.getElementById('configScreen').style.display = 'none';
+    document.getElementById('dashboardScreen').style.display = 'block';
+    document.getElementById('sectionToggle').style.display = 'flex';
+    switchSection(1);
+  }).catch(err => {
+    showError('Could not load data. Make sure the sheet is published to the web as CSV. (' + err.message + ')');
+  });
+}
+
+function parseRow(row) {
+  try {
+    const parseFrac = (str) => {
+      if (!str || str === '0/0') return 0;
+      const parts = str.split('/');
+      if (parts.length !== 2) return parseFloat(str) || 0;
+      const possible = parseFloat(parts[1]);
+      return possible > 0 ? Math.round((parseFloat(parts[0]) / possible) * 100) : 0;
+    };
+
+    return {
+      section:         String(row['Section'] || row['section'] || ''),
+      studentName:     row['Student Name'] || '',
+      period:          row['Period'] || '',
+      overallScore:    parseFloat(row['Overall Score (%)']) || 0,
+      pointsEarned:    parseFloat(row['Points Earned']) || 0,
+      pointsPossible:  parseFloat(row['Points Possible']) || 0,
+      achievementLevel: row['Achievement Level'] || '',
+      // Domain %
+      nrPct:    parseFloat(row['NR %'])  || parseFrac(row['NR Score'])  || 0,
+      parPct:   parseFloat(row['PAR %']) || parseFrac(row['PAR Score']) || 0,
+      mdrPct:   parseFloat(row['MDR %']) || parseFrac(row['MDR Score']) || 0,
+      gsrPct:   parseFloat(row['GSR %']) || parseFrac(row['GSR Score']) || 0,
+      // Standard %
+      nr1Pct:   parseFloat(row['3.NR.1 %'])   || parseFrac(row['3.NR.1 Score'])   || 0,
+      nr4Pct:   parseFloat(row['3.NR.4 %'])   || parseFrac(row['3.NR.4 Score'])   || 0,
+      par2Pct:  parseFloat(row['3.PAR.2 %'])  || parseFrac(row['3.PAR.2 Score'])  || 0,
+      par3Pct:  parseFloat(row['3.PAR.3 %'])  || parseFrac(row['3.PAR.3 Score'])  || 0,
+      mdr5Pct:  parseFloat(row['3.MDR.5 %'])  || parseFrac(row['3.MDR.5 Score'])  || 0,
+      gsr6Pct:  parseFloat(row['3.GSR.6 %'])  || parseFrac(row['3.GSR.6 Score'])  || 0,
+      gsr7Pct:  parseFloat(row['3.GSR.7 %'])  || parseFrac(row['3.GSR.7 Score'])  || 0,
+      gsr8Pct:  parseFloat(row['3.GSR.8 %'])  || parseFrac(row['3.GSR.8 Score'])  || 0,
+      // DOK %
+      dok1Pct:  parseFloat(row['DOK 1 %']) || parseFrac(row['DOK 1 Score']) || 0,
+      dok2Pct:  parseFloat(row['DOK 2 %']) || parseFrac(row['DOK 2 Score']) || 0,
+      dok3Pct:  parseFloat(row['DOK 3 %']) || parseFrac(row['DOK 3 Score']) || 0,
+      // Vocab
+      vocabFlagCount: parseInt(row['Vocab Flag Count']) || 0,
+      vocabFlags: (row['Vocab Flag Items'] || '').split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)),
+      timeSpent: parseFloat(row['Time Spent (min)']) || 0,
+      timestamp: new Date(row['Timestamp'] || Date.now())
+    };
+  } catch(e) { return null; }
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.toggle('show', !!msg);
+}
+
+// ============================================================
+// SECTION SWITCH
+// ============================================================
+function switchSection(n) {
+  activeSection = n;
+  document.getElementById('tab1').classList.toggle('active', n === 1);
+  document.getElementById('tab2').classList.toggle('active', n === 2);
+  const cfg = SECTION_CONFIG[n];
+  const pill = document.getElementById('sectionPill');
+  pill.textContent = cfg.label;
+  pill.className = 'section-pill' + (cfg.pillClass ? ' ' + cfg.pillClass : '');
+  document.getElementById('sectionLabelText').innerHTML = cfg.labelText;
+  applyFilters();
+}
+
+// ============================================================
+// FILTERS
+// ============================================================
+function applyFilters() {
+  const sourceData = activeSection === 1 ? allData1 : allData2;
+  const period = document.getElementById('filterPeriod').value;
+  const search = document.getElementById('filterSearch').value.toLowerCase().trim();
+
+  filteredData = sourceData.filter(r => {
+    if (period !== 'all' && r.period !== period) return false;
+    if (search && !r.studentName.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  document.getElementById('studentCount').textContent = `(${filteredData.length} student${filteredData.length !== 1 ? 's' : ''})`;
+  renderKPIs();
+  renderStandardChart();
+  renderDOKChart();
+  renderHistogram();
+  renderLevelChart();
+  renderWeaknessList();
+  renderVocabHeatmap();
+  renderStudentTable();
+}
+
+// ============================================================
+// KPI CARDS
+// ============================================================
+function renderKPIs() {
+  const n = filteredData.length;
+  if (n === 0) { document.getElementById('kpiGrid').innerHTML = '<div class="no-data">No data for this section yet.</div>'; return; }
+
+  const avg = Math.round(filteredData.reduce((s, r) => s + r.overallScore, 0) / n);
+  const dist = filteredData.filter(r => r.achievementLevel.includes('Distinguished')).length;
+  const prof = filteredData.filter(r => r.achievementLevel.includes('Proficient')).length;
+  const dev  = filteredData.filter(r => r.achievementLevel.includes('Developing')).length;
+  const beg  = filteredData.filter(r => r.achievementLevel.includes('Beginning')).length;
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card"><div class="label">Students</div><div class="value">${n}</div><div class="sub">filtered results</div></div>
+    <div class="kpi-card"><div class="label">Class Average</div><div class="value">${avg}%</div><div class="sub">overall score</div></div>
+    <div class="kpi-card distinguished"><div class="label">Distinguished</div><div class="value">${dist}</div><div class="sub">${Math.round(dist/n*100)}% of class · ≥80%</div></div>
+    <div class="kpi-card proficient"><div class="label">Proficient</div><div class="value">${prof}</div><div class="sub">${Math.round(prof/n*100)}% of class · 60–79%</div></div>
+    <div class="kpi-card developing"><div class="label">Developing</div><div class="value">${dev}</div><div class="sub">${Math.round(dev/n*100)}% of class · 35–59%</div></div>
+    <div class="kpi-card beginning"><div class="label">Beginning</div><div class="value">${beg}</div><div class="sub">${Math.round(beg/n*100)}% of class · &lt;35%</div></div>`;
+}
+
+// ============================================================
+// CHARTS
+// ============================================================
+function destroyChart(key) { if (charts[key]) { charts[key].destroy(); delete charts[key]; } }
+
+function renderStandardChart() {
+  destroyChart('standard');
+  const n = filteredData.length || 1;
+  const cfg = SECTION_CONFIG[activeSection];
+
+  const avgs = cfg.standards.map(s => Math.round(filteredData.reduce((sum, r) => sum + r[s.key], 0) / n));
+  const labels = cfg.standards.map(s => s.name);
+  document.getElementById('standardChartTitle').textContent = `Standard Breakdown — ${SECTION_CONFIG[activeSection].label}`;
+
+  charts.standard = new Chart(document.getElementById('standardChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'Class Avg %', data: avgs, backgroundColor: avgs.map(v => v >= 80 ? '#2e7d32' : v >= 60 ? '#1a5490' : v >= 35 ? '#f9a825' : '#c62828'), borderRadius: 4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } }, plugins: { legend: { display: false } } }
+  });
+}
+
+function renderDOKChart() {
+  destroyChart('dok');
+  const n = filteredData.length || 1;
+  const avgs = [1, 2, 3].map(lv => Math.round(filteredData.reduce((s, r) => s + r[`dok${lv}Pct`], 0) / n));
+  charts.dok = new Chart(document.getElementById('dokChart'), {
+    type: 'bar',
+    data: {
+      labels: ['DOK 1 (Recall)', 'DOK 2 (Skill/Concept)', 'DOK 3 (Strategic)'],
+      datasets: [{ label: 'Class Avg %', data: avgs, backgroundColor: ['#81c784', '#1a5490', '#1a3d6e'], borderRadius: 4 }]
+    },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } }, plugins: { legend: { display: false } } }
+  });
+}
+
+function renderHistogram() {
+  destroyChart('hist');
+  const bins = Array(10).fill(0);
+  filteredData.forEach(r => { bins[Math.min(Math.floor(r.overallScore / 10), 9)]++; });
+  const colors = ['#c62828','#c62828','#c62828','#c62828','#f9a825','#f9a825','#1a5490','#1a5490','#2e7d32','#2e7d32'];
+  charts.hist = new Chart(document.getElementById('histogramChart'), {
+    type: 'bar',
+    data: {
+      labels: ['0–9','10–19','20–29','30–34','35–49','50–59','60–69','70–79','80–89','90–100'],
+      datasets: [{ label: 'Students', data: bins, backgroundColor: colors, borderRadius: 3 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }, plugins: { legend: { display: false } } }
+  });
+}
+
+function renderLevelChart() {
+  destroyChart('level');
+  const dist = filteredData.filter(r => r.achievementLevel.includes('Distinguished')).length;
+  const prof = filteredData.filter(r => r.achievementLevel.includes('Proficient')).length;
+  const dev  = filteredData.filter(r => r.achievementLevel.includes('Developing')).length;
+  const beg  = filteredData.filter(r => r.achievementLevel.includes('Beginning')).length;
+  charts.level = new Chart(document.getElementById('levelChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Distinguished', 'Proficient', 'Developing', 'Beginning'],
+      datasets: [{ data: [dist, prof, dev, beg], backgroundColor: ['#2e7d32','#1a5490','#f9a825','#c62828'], borderWidth: 2 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } } }
+  });
+}
+
+// ============================================================
+// WEAKNESS LIST
+// ============================================================
+function renderWeaknessList() {
+  const n = filteredData.length || 1;
+  const cfg = SECTION_CONFIG[activeSection];
+  const items = cfg.standards.map(s => ({
+    name: s.name,
+    pct: Math.round(filteredData.reduce((sum, r) => sum + r[s.key], 0) / n)
+  })).sort((a, b) => a.pct - b.pct);
+
+  document.getElementById('weaknessList').innerHTML = items.map((d, i) => {
+    const color = d.pct >= 80 ? '#2e7d32' : d.pct >= 60 ? '#1a5490' : d.pct >= 35 ? '#f9a825' : '#c62828';
+    return `<li class="weakness-item">
+      <div class="weakness-rank ${i < 2 ? 'top-3' : ''}">${i + 1}</div>
+      <div class="weakness-name">${d.name}</div>
+      <div class="weakness-bar"><div class="weakness-bar-fill" style="width:${d.pct}%;background:${color};"></div></div>
+      <div class="weakness-score" style="color:${color};">${d.pct}%</div>
+    </li>`;
+  }).join('');
+}
+
+// ============================================================
+// VOCAB HEATMAP
+// ============================================================
+function renderVocabHeatmap() {
+  const totalItems = activeSection === 1 ? 27 : 28;
+  const flagCounts = {};
+  for (let i = 1; i <= totalItems; i++) flagCounts[i] = 0;
+  filteredData.forEach(r => r.vocabFlags.forEach(n => { if (flagCounts[n] !== undefined) flagCounts[n]++; }));
+
+  document.getElementById('vocabHeatmap').innerHTML = Object.keys(flagCounts).map(i => {
+    const count = flagCounts[i];
+    const heat = count >= 5 ? 'heat-5' : count === 4 ? 'heat-4' : count === 3 ? 'heat-3' : count === 2 ? 'heat-2' : count === 1 ? 'heat-1' : 'heat-0';
+    return `<div class="heatmap-cell ${heat}" title="Q${i}: ${count} flag${count !== 1 ? 's' : ''}"><div class="q-num">${i}</div><div class="flag-count">${count > 0 ? count : ''}</div></div>`;
+  }).join('');
+}
+
+// ============================================================
+// STUDENT TABLE
+// ============================================================
+function renderStudentTable() {
+  const cfg = SECTION_CONFIG[activeSection];
+
+  // Build header
+  const stdCols = cfg.standards.map(s => `<th onclick="sortTable('${s.key}')">${s.name.split(' ')[0]}</th>`).join('');
+  document.getElementById('studentTableHead').innerHTML = `<tr>
+    <th onclick="sortTable('studentName')">Name</th>
+    <th onclick="sortTable('period')">Period</th>
+    <th onclick="sortTable('overallScore')">Score</th>
+    <th onclick="sortTable('achievementLevel')">Level</th>
+    ${stdCols}
+    <th onclick="sortTable('vocabFlagCount')">Flags</th>
+    <th onclick="sortTable('timestamp')">Date</th>
+  </tr>`;
+
+  const data = filteredData.slice().sort((a, b) => {
+    let av = a[sortState.column], bv = b[sortState.column];
+    if (av instanceof Date) { av = av.getTime(); bv = bv.getTime(); }
+    if (typeof av === 'string') { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    if (av < bv) return sortState.direction === 'asc' ? -1 : 1;
+    if (av > bv) return sortState.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const levelClass = l => l.includes('Distinguished') ? 'distinguished' : l.includes('Proficient') ? 'proficient' : l.includes('Developing') ? 'developing' : 'beginning';
+  const miniBar = pct => `${pct}%<div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;"></div></div>`;
+
+  document.getElementById('studentTableBody').innerHTML = data.length === 0
+    ? `<tr><td colspan="10" class="no-data">No results match the current filters.</td></tr>`
+    : data.map(r => {
+        const stdCells = cfg.standards.map(s => `<td>${miniBar(r[s.key])}</td>`).join('');
+        return `<tr>
+          <td class="name">${r.studentName}</td>
+          <td>${r.period}</td>
+          <td><strong>${r.overallScore}%</strong></td>
+          <td><span class="level-badge ${levelClass(r.achievementLevel)}">${r.achievementLevel.replace(' Learner','')}</span></td>
+          ${stdCells}
+          <td>${r.vocabFlagCount > 0 ? '🚩 ' + r.vocabFlagCount : '—'}</td>
+          <td style="font-size:11px;color:#666;">${r.timestamp.toLocaleDateString()}</td>
+        </tr>`;
+      }).join('');
+}
+
+function sortTable(col) {
+  sortState.direction = sortState.column === col && sortState.direction === 'asc' ? 'desc' : 'asc';
+  sortState.column = col;
+  renderStudentTable();
+}
+
+// ============================================================
+// EXPORT CSV
+// ============================================================
+function exportCSV() {
+  if (!filteredData.length) { alert('No data to export.'); return; }
+  const cfg = SECTION_CONFIG[activeSection];
+  const stdHeaders = cfg.standards.map(s => s.name + ' %');
+  const headers = ['Student Name','Period','Overall Score','Achievement Level',...stdHeaders,'DOK 1 %','DOK 2 %','DOK 3 %','Vocab Flags','Time (min)','Date'];
+  const rows = filteredData.map(r => [
+    r.studentName, r.period, r.overallScore + '%', r.achievementLevel,
+    ...cfg.standards.map(s => r[s.key] + '%'),
+    r.dok1Pct + '%', r.dok2Pct + '%', r.dok3Pct + '%',
+    r.vocabFlagCount, r.timeSpent, r.timestamp.toLocaleDateString()
+  ]);
+  const csv = [headers, ...rows].map(row => row.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `gr3-section${activeSection}-results-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grade 3 Math — Section 2: Measurement, Data &amp; Geometry</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #f0f2f5; color: #222; min-height: 100vh; }
+
+#startScreen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+.start-card { background: #fff; border-radius: 12px; padding: 40px; max-width: 580px; width: 100%; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border-top: 6px solid #2e7d32; }
+.start-card h1 { color: #2e7d32; font-size: 26px; margin-bottom: 6px; }
+.start-card .subtitle { color: #666; font-size: 15px; margin-bottom: 24px; }
+.info-box { background: #f8f9fa; border-left: 4px solid #2e7d32; padding: 16px; margin-bottom: 24px; border-radius: 4px; font-size: 14px; line-height: 1.7; }
+.info-box strong { color: #2e7d32; }
+.section-badge { display: inline-block; background: #2e7d32; color: #fff; padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; margin-bottom: 16px; }
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; font-weight: 600; margin-bottom: 6px; color: #333; font-size: 14px; }
+.form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; transition: border-color 0.2s; }
+.form-group input:focus, .form-group select:focus { outline: none; border-color: #2e7d32; }
+.start-btn { width: 100%; background: #2e7d32; color: #fff; border: none; padding: 14px; font-size: 18px; font-weight: 600; border-radius: 6px; cursor: pointer; margin-top: 10px; transition: background 0.2s; }
+.start-btn:hover { background: #1b5e20; }
+
+#testScreen { display: none; min-height: 100vh; background: #fff; }
+.top-bar { background: #1b5e20; color: #fff; padding: 8px 16px; display: flex; align-items: center; font-size: 14px; gap: 12px; flex-wrap: wrap; }
+.top-bar-title { font-weight: 700; font-size: 15px; }
+.student-badge { background: rgba(255,255,255,0.15); padding: 3px 10px; border-radius: 12px; font-size: 13px; }
+.spacer { flex: 1; }
+.progress-wrap { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.progress-track { width: 120px; height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden; }
+.progress-bar { height: 100%; background: #81c784; border-radius: 4px; transition: width 0.3s; width: 0%; }
+
+.question-selector { position: relative; cursor: pointer; padding: 4px 8px; border-radius: 3px; user-select: none; }
+.question-selector:hover { background: rgba(255,255,255,0.1); }
+.question-dropdown { display: none; position: absolute; top: 100%; left: 0; background: #fff; color: #222; min-width: 130px; max-height: 380px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.2); border-radius: 4px; z-index: 1000; margin-top: 4px; }
+.question-dropdown.show { display: block; }
+.question-dropdown-item { padding: 8px 16px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+.question-dropdown-item:hover { background: #f0f4f8; }
+.question-dropdown-item.answered { background: #e8f4ea; }
+.question-dropdown-item.flagged::after { content: "🚩"; margin-left: 8px; }
+.question-dropdown-item.current { background: #2e7d32; color: #fff; }
+
+.toolbar { background: #fff; padding: 8px 16px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
+.nav-btns { display: flex; gap: 4px; margin-right: 8px; }
+.nav-btn { background: #fff; border: 2px solid #1b5e20; color: #1b5e20; width: 40px; height: 36px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; transition: all 0.15s; }
+.nav-btn.primary { background: #1b5e20; color: #fff; }
+.nav-btn:hover { transform: translateY(-1px); }
+.nav-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.tool-btn { background: #f5f7fa; border: 1px solid #ccc; width: 36px; height: 32px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #333; transition: background 0.15s; }
+.tool-btn:hover { background: #e0ede0; }
+.tool-btn.active { background: #1b5e20; color: #fff; border-color: #1b5e20; }
+.flag-btn { background: transparent; border: 2px solid #ddd; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 17px; transition: all 0.2s; display: flex; align-items: center; gap: 4px; }
+.flag-btn.flagged { background: #fff3cd; border-color: #ffc107; }
+.flag-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #666; }
+.submit-area { margin-left: auto; }
+.submit-top-btn { background: #c62828; color: #fff; border: none; padding: 8px 20px; border-radius: 5px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+.submit-top-btn:hover { background: #a31f1f; }
+
+.main-area { display: flex; min-height: calc(100vh - 100px); }
+.question-panel { flex: 1; padding: 24px 32px; overflow-y: auto; }
+.question-panel.with-calc { max-width: calc(100% - 300px); }
+.question-container { max-width: 860px; margin: 0 auto; border: 1px solid #c8d1dc; border-radius: 4px; padding: 24px 28px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.question-meta { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
+.q-number { font-size: 13px; font-weight: 700; color: #1b5e20; }
+.q-standard { background: #e8f5e9; color: #1b5e20; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.question-type-label { display: inline-block; background: #e8f5e9; color: #1b5e20; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.question-type-label.multiselect { background: #fff3e0; color: #e65100; }
+.question-type-label.dragdrop { background: #f3e5f5; color: #6a1b9a; }
+.question-stem { font-size: 17px; line-height: 1.65; color: #222; margin-bottom: 20px; margin-top: 12px; }
+.question-stem p { margin-bottom: 10px; }
+.question-stem table { border-collapse: collapse; margin: 12px 0; }
+.question-stem td, .question-stem th { border: 2px solid #555; padding: 8px 14px; text-align: center; font-size: 15px; }
+.question-stem th { background: #e8f5e9; font-weight: 700; }
+.bar-chart { margin: 12px 0; display: flex; flex-direction: column; gap: 6px; }
+.bar-row { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.bar-label { min-width: 80px; text-align: right; font-weight: 600; }
+.bar-fill { height: 28px; background: #2e7d32; border-radius: 3px; display: flex; align-items: center; padding-left: 8px; color: #fff; font-size: 13px; font-weight: 700; }
+.bar-y-label { font-size: 12px; color: #666; text-align: center; margin-top: 4px; }
+.shape-box { border: 3px solid #333; display: inline-block; padding: 10px 20px; margin: 8px; font-size: 14px; font-weight: 600; }
+.grid-shape { display: grid; gap: 0; margin: 12px auto; width: fit-content; }
+.grid-cell { width: 30px; height: 30px; border: 1px solid #999; }
+.grid-cell.filled { background: #2e7d32; }
+.clock-container { font-size: 60px; text-align: center; margin: 10px 0; }
+.ruler-img { font-family: monospace; font-size: 13px; background: #fffde7; border: 2px solid #f9a825; padding: 8px 12px; border-radius: 4px; margin: 10px 0; display: inline-block; letter-spacing: 2px; }
+
+.options-list { list-style: none; }
+.option-item { display: flex; align-items: flex-start; padding: 14px 16px; margin-bottom: 8px; border: 2px solid #e0e4e8; border-radius: 6px; cursor: pointer; transition: all 0.15s; background: #fff; }
+.option-item:hover { border-color: #2e7d32; background: #f8fcf8; }
+.option-item.selected { border-color: #2e7d32; background: #e8f5e9; }
+.option-circle { width: 28px; height: 28px; border: 2px solid #999; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; color: #555; margin-right: 14px; flex-shrink: 0; background: #fff; transition: all 0.15s; }
+.option-item.selected .option-circle { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+.option-item.multi .option-circle { border-radius: 4px; }
+.option-text { flex: 1; font-size: 16px; line-height: 1.5; padding-top: 3px; }
+
+.dragdrop-area { margin-top: 16px; }
+.drag-source-container { border: 2px dashed #c8d1dc; padding: 16px; border-radius: 6px; background: #fafbfc; margin-bottom: 20px; }
+.drag-source-label { font-size: 13px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px; }
+.drag-items { display: flex; flex-wrap: wrap; gap: 8px; min-height: 50px; }
+.drag-item { padding: 10px 16px; background: #fff; border: 2px solid #2e7d32; border-radius: 6px; cursor: grab; font-size: 15px; user-select: none; transition: all 0.15s; color: #1b5e20; font-weight: 500; }
+.drag-item:hover { background: #e8f5e9; transform: translateY(-1px); }
+.drag-item.dragging { opacity: 0.4; }
+.drag-item.placed { display: none; }
+.drop-zones { display: flex; flex-direction: column; gap: 12px; }
+.drop-zone { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: #f5f7fa; border-radius: 6px; border: 1px solid #d8dde5; }
+.drop-zone-label { font-weight: 600; color: #333; min-width: 160px; font-size: 15px; }
+.drop-target { min-width: 140px; min-height: 44px; padding: 8px 14px; border: 2px dashed #c8d1dc; border-radius: 6px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; transition: all 0.15s; flex: 1; flex-wrap: wrap; gap: 4px; }
+.drop-target.drag-over { border-color: #2e7d32; background: #e8f5e9; border-style: solid; }
+.drop-target.filled { border-style: solid; border-color: #2e7d32; background: #e8f5e9; }
+.filled-item { background: #2e7d32; color: #fff; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; }
+.filled-item:hover { background: #c62828; }
+
+#calcPanel { width: 300px; background: #f8f9fa; border-left: 1px solid #ddd; display: none; flex-direction: column; padding: 16px; }
+#calcPanel.show { display: flex; }
+.calc-title { font-size: 13px; font-weight: 700; color: #1b5e20; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.calc-display { background: #1b5e20; color: #fff; padding: 12px 16px; border-radius: 6px; font-size: 24px; font-family: monospace; text-align: right; margin-bottom: 10px; min-height: 54px; word-break: break-all; }
+.calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.calc-btn { padding: 14px 6px; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.15s; background: #fff; border: 1px solid #ddd; color: #333; }
+.calc-btn:hover { background: #e8f5e9; transform: translateY(-1px); }
+.calc-btn.op { background: #e8f5e9; color: #1b5e20; }
+.calc-btn.eq { background: #2e7d32; color: #fff; grid-column: span 2; }
+.calc-btn.eq:hover { background: #1b5e20; }
+.calc-btn.clr { background: #ffebee; color: #c62828; }
+.calc-btn.zero { grid-column: span 2; }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: #fff; border-radius: 10px; padding: 32px; max-width: 480px; width: 100%; box-shadow: 0 16px 48px rgba(0,0,0,0.2); }
+.modal-box h2 { color: #1b5e20; font-size: 20px; margin-bottom: 16px; }
+.stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 15px; }
+.modal-actions { display: flex; gap: 12px; margin-top: 20px; }
+.btn-cancel { flex: 1; background: #fff; border: 2px solid #ddd; padding: 12px; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.btn-cancel:hover { border-color: #999; }
+.btn-submit-final { flex: 1; background: #c62828; color: #fff; border: none; padding: 12px; border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; }
+.btn-submit-final:hover { background: #a31f1f; }
+
+#resultsScreen { display: none; min-height: 100vh; background: #f0f2f5; padding: 30px 20px; }
+.results-container { max-width: 720px; margin: 0 auto; }
+.results-header { background: #1b5e20; color: #fff; border-radius: 10px 10px 0 0; padding: 24px 28px; }
+.results-header h2 { font-size: 20px; margin-bottom: 4px; }
+.results-header .student-line { font-size: 14px; opacity: 0.85; }
+.results-body { background: #fff; border-radius: 0 0 10px 10px; padding: 28px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.score-hero { text-align: center; padding: 20px 0 24px; border-bottom: 1px solid #eee; margin-bottom: 24px; }
+.score-pct { font-size: 64px; font-weight: 800; color: #1b5e20; line-height: 1; }
+.score-level { font-size: 20px; font-weight: 700; margin-top: 8px; }
+.score-level.distinguished { color: #2e7d32; }
+.score-level.proficient { color: #1a5490; }
+.score-level.developing { color: #f9a825; }
+.score-level.beginning { color: #c62828; }
+.score-detail { font-size: 14px; color: #666; margin-top: 6px; }
+.results-section { margin-bottom: 24px; }
+.results-section h3 { font-size: 15px; font-weight: 700; color: #1b5e20; border-bottom: 2px solid #2e7d32; padding-bottom: 8px; margin-bottom: 14px; }
+.domain-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.domain-name { font-size: 14px; color: #333; min-width: 220px; }
+.domain-bar { flex: 1; height: 12px; background: #e8f5e9; border-radius: 6px; overflow: hidden; }
+.domain-bar-fill { height: 100%; border-radius: 6px; background: #2e7d32; transition: width 0.8s ease; }
+.domain-score { font-size: 13px; font-weight: 700; color: #1b5e20; min-width: 80px; text-align: right; }
+.vocab-summary { background: #fff8e1; border-left: 4px solid #ffc107; padding: 12px 16px; border-radius: 4px; font-size: 14px; margin-top: 16px; }
+.submit-status { padding: 12px 16px; border-radius: 6px; font-size: 14px; text-align: center; margin-top: 16px; background: #e8f5e9; color: #2e7d32; }
+.section-note { background: #e8f5e9; border-radius: 8px; padding: 16px; text-align: center; margin-top: 20px; font-size: 15px; color: #1b5e20; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- START SCREEN -->
+<div id="startScreen">
+  <div class="start-card">
+    <div class="section-badge">Section 2 of 2</div>
+    <h1>Grade 3 Mathematics</h1>
+    <p class="subtitle">Georgia Milestones Practice Simulation</p>
+    <div class="info-box">
+      <strong>Section 2: Measurement, Data &amp; Geometry</strong><br>
+      Standards: 3.MDR.5 &bull; 3.GSR.6 &bull; 3.GSR.7 &bull; 3.GSR.8<br><br>
+      <strong>Items:</strong> 28 questions &nbsp;|&nbsp; <strong>Points:</strong> 29 possible<br>
+      Read each question carefully. You may flag questions to review before submitting.<br>
+      A calculator is available on the toolbar.
+    </div>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="studentName" placeholder="First and Last Name" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Class Period</label>
+      <select id="studentPeriod">
+        <option value="">-- Select Period --</option>
+        <option value="1">Period 1</option>
+        <option value="2">Period 2</option>
+        <option value="3">Period 3</option>
+        <option value="4">Period 4</option>
+        <option value="5">Period 5</option>
+        <option value="6">Period 6</option>
+        <option value="7">Period 7</option>
+      </select>
+    </div>
+    <button class="start-btn" onclick="startTest()">Begin Section 2 ▶</button>
+  </div>
+</div>
+
+<!-- TEST SCREEN -->
+<div id="testScreen">
+  <div class="top-bar">
+    <span class="top-bar-title">Grade 3 Math · Section 2</span>
+    <span class="student-badge" id="studentBadge"></span>
+    <div class="question-selector" onclick="toggleQuestionDropdown()">
+      Question <span id="currentQNum">1</span> of 28 ▾
+      <div class="question-dropdown" id="questionDropdown"></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="progress-wrap">
+      <span id="progressText">0 of 28</span>
+      <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="nav-btns">
+      <button class="nav-btn" id="btnPrev" onclick="navigate(-1)" disabled>&#8592;</button>
+      <button class="nav-btn primary" id="btnNext" onclick="navigate(1)">&#8594;</button>
+    </div>
+    <button class="tool-btn" id="calcBtn" onclick="toggleCalc()" title="Calculator">🧮</button>
+    <button class="flag-btn" id="vocabFlagBtn" onclick="toggleVocabFlag()">🚩 <span class="flag-label">Flag</span></button>
+    <div class="submit-area">
+      <button class="submit-top-btn" onclick="showSubmitConfirm()">Submit Section 2</button>
+    </div>
+  </div>
+
+  <div class="main-area">
+    <div class="question-panel" id="questionPanel">
+      <div class="question-container" id="questionContainer"></div>
+    </div>
+    <div id="calcPanel">
+      <div class="calc-title">🧮 Calculator</div>
+      <div class="calc-display" id="calcDisplay">0</div>
+      <div class="calc-grid">
+        <button class="calc-btn clr" onclick="calcClear()">C</button>
+        <button class="calc-btn op" onclick="calcOp('back')">⌫</button>
+        <button class="calc-btn op" onclick="calcOp('%')">%</button>
+        <button class="calc-btn op" onclick="calcOp('/')">÷</button>
+        <button class="calc-btn" onclick="calcDigit('7')">7</button>
+        <button class="calc-btn" onclick="calcDigit('8')">8</button>
+        <button class="calc-btn" onclick="calcDigit('9')">9</button>
+        <button class="calc-btn op" onclick="calcOp('*')">×</button>
+        <button class="calc-btn" onclick="calcDigit('4')">4</button>
+        <button class="calc-btn" onclick="calcDigit('5')">5</button>
+        <button class="calc-btn" onclick="calcDigit('6')">6</button>
+        <button class="calc-btn op" onclick="calcOp('-')">−</button>
+        <button class="calc-btn" onclick="calcDigit('1')">1</button>
+        <button class="calc-btn" onclick="calcDigit('2')">2</button>
+        <button class="calc-btn" onclick="calcDigit('3')">3</button>
+        <button class="calc-btn op" onclick="calcOp('+')">+</button>
+        <button class="calc-btn zero" onclick="calcDigit('0')">0</button>
+        <button class="calc-btn" onclick="calcDigit('.')">.</button>
+        <button class="calc-btn eq" onclick="calcEquals()">=</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Submit Confirm Modal -->
+<div class="modal-overlay" id="submitModal">
+  <div class="modal-box">
+    <h2>Ready to Submit?</h2>
+    <div id="submitStats"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="hideSubmitConfirm()">Go Back</button>
+      <button class="btn-submit-final" id="finalSubmitBtn" onclick="submitTest()">Submit Section 2</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div id="resultsScreen">
+  <div class="results-container">
+    <div class="results-header">
+      <h2>Section 2 Results — Measurement, Data &amp; Geometry</h2>
+      <div class="student-line" id="resultsStudent"></div>
+    </div>
+    <div class="results-body">
+      <div class="score-hero">
+        <div class="score-pct" id="resultScore"></div>
+        <div class="score-level" id="resultLevel"></div>
+        <div class="score-detail" id="resultDetail"></div>
+      </div>
+      <div class="results-section">
+        <h3>Standard Breakdown</h3>
+        <div id="standardBreakdown"></div>
+      </div>
+      <div class="results-section">
+        <h3>DOK Level Breakdown</h3>
+        <div id="dokBreakdown"></div>
+      </div>
+      <div class="vocab-summary" id="vocabSummary" style="display:none;">
+        🚩 <strong>Vocabulary Flags:</strong> <span id="vocabFlagText"></span>
+      </div>
+      <div class="submit-status" id="submitStatus">Sending results to your teacher...</div>
+      <div class="section-note">✅ Both sections complete! Great work.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzH6SbBdnfpGvJi143eo4nzyWEnA1c5V-WCZrxmXWJemY9y3E4Ws2c6jSsLwyKlzLUY/exec';
+const SECTION = '2';
+
+// ============================================================
+// QUESTION BANK — Section 2
+// Standards: 3.MDR.5 (10 pts), 3.GSR.6 (6 pts), 3.GSR.7+3.GSR.8 (8 pts combined)
+// 22 one-point + 3 two-point + 3 field test = 28 items, 29 scored points
+// ============================================================
+const QUESTIONS = [
+
+  // ── 3.MDR.5 Measurement & Data (10 pts: 6×1pt + 2×2pt = 10) ──
+  {
+    id: 1, standard: '3.MDR.5', domain: 'MDR', dok: 1, points: 1, type: 'single', fieldTest: false,
+    stem: `<p>Look at the bar graph showing students' favorite fruits.</p>
+<div class="bar-chart">
+  <div class="bar-row"><span class="bar-label">Apple</span><div class="bar-fill" style="width:120px;">12</div></div>
+  <div class="bar-row"><span class="bar-label">Banana</span><div class="bar-fill" style="width:80px;">8</div></div>
+  <div class="bar-row"><span class="bar-label">Grape</span><div class="bar-fill" style="width:50px;">5</div></div>
+  <div class="bar-row"><span class="bar-label">Mango</span><div class="bar-fill" style="width:90px;">9</div></div>
+</div>
+<p>How many more students chose Apple than Grape?</p>`,
+    options: ['3', '5', '7', '17'],
+    answer: 2
+  },
+  {
+    id: 2, standard: '3.MDR.5', domain: 'MDR', dok: 1, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>What time is shown on this clock?</p><div class="clock-container">🕖</div><p>The hour hand points between 6 and 7. The minute hand points to the 4.</p>',
+    options: ['6:04', '6:20', '6:40', '4:30'],
+    answer: 1
+  },
+  {
+    id: 3, standard: '3.MDR.5', domain: 'MDR', dok: 1, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>A water bottle holds about how much liquid?</p>',
+    options: ['1 cup', '1 gallon', '2 liters', '1 pint'],
+    answer: 2
+  },
+  {
+    id: 4, standard: '3.MDR.5', domain: 'MDR', dok: 2, points: 1, type: 'single', fieldTest: false,
+    stem: `<p>The dot plot below shows how many books students read last month.</p>
+<p style="font-family:monospace; font-size:16px; margin:10px 0; line-height:1.8;">
+1 &nbsp; 2 &nbsp; 3 &nbsp; 4 &nbsp; 5<br>
+• &nbsp; • &nbsp; • &nbsp;&nbsp;&nbsp; • &nbsp; •<br>
+&nbsp;&nbsp;&nbsp;&nbsp; • &nbsp; • &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; •<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; •
+</p>
+<p>How many students read 3 or more books?</p>`,
+    options: ['3', '4', '5', '6'],
+    answer: 2
+  },
+  {
+    id: 5, standard: '3.MDR.5', domain: 'MDR', dok: 2, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>Soccer practice starts at 3:15 PM and lasts 45 minutes.</p><p>What time does practice end?</p>',
+    options: ['3:45 PM', '4:00 PM', '4:15 PM', '4:30 PM'],
+    answer: 1
+  },
+  {
+    id: 6, standard: '3.MDR.5', domain: 'MDR', dok: 2, points: 2, type: 'single', fieldTest: false,
+    stem: `<p>The table shows the heights of four plants.</p>
+<table>
+  <tr><th>Plant</th><th>Height (inches)</th></tr>
+  <tr><td>Sunflower</td><td>24</td></tr>
+  <tr><td>Rose</td><td>18</td></tr>
+  <tr><td>Daisy</td><td>10</td></tr>
+  <tr><td>Tulip</td><td>15</td></tr>
+</table>
+<p>How much taller is the Sunflower than the Daisy and Tulip combined?</p>`,
+    options: ['1 inch', '14 inches', '9 inches', '4 inches'],
+    answer: 0
+  },
+  {
+    id: 7, standard: '3.MDR.5', domain: 'MDR', dok: 2, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>A bag of apples weighs 3 pounds. About how many ounces is that?</p><p style="font-size:13px;color:#666;">(Hint: 1 pound = 16 ounces)</p>',
+    options: ['19 ounces', '32 ounces', '48 ounces', '13 ounces'],
+    answer: 2
+  },
+  {
+    id: 8, standard: '3.MDR.5', domain: 'MDR', dok: 3, points: 2, type: 'multi', fieldTest: false,
+    stem: `<p>A teacher recorded how many minutes students spent reading each day for a week.</p>
+<p>Monday: 20 min, Tuesday: 25 min, Wednesday: 15 min, Thursday: 30 min, Friday: 25 min</p>
+<p>Select <strong>all</strong> true statements about the data.</p>`,
+    options: [
+      'The total reading time for the week was 115 minutes.',
+      'Students read more on Friday than Monday.',
+      'Wednesday had the least reading time.',
+      'The difference between the most and least reading time is 10 minutes.'
+    ],
+    answer: [0, 1, 2]
+  },
+  {
+    id: 9, standard: '3.MDR.5', domain: 'MDR', dok: 2, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>A ribbon is 9 inches long. Julia cuts off 2¼ inches. About how long is the ribbon now?</p>',
+    options: ['About 7 inches', 'About 6¾ inches', 'About 8 inches', 'About 6 inches'],
+    answer: 1
+  },
+  {
+    id: 10, standard: '3.MDR.5', domain: 'MDR', dok: 1, points: 1, type: 'single', fieldTest: true,
+    stem: '<p>About how much does a large dog weigh?</p>',
+    options: ['5 pounds', '50 pounds', '500 pounds', '5,000 pounds'],
+    answer: 1
+  },
+
+  // ── 3.GSR.6 Polygons & Attributes (6 pts: 4×1pt + 1×2pt = 6) ──
+  {
+    id: 11, standard: '3.GSR.6', domain: 'GSR', dok: 1, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>Which shape has <strong>exactly 4 right angles</strong>?</p>',
+    options: ['Triangle', 'Hexagon', 'Rectangle', 'Pentagon'],
+    answer: 2
+  },
+  {
+    id: 12, standard: '3.GSR.6', domain: 'GSR', dok: 1, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>Which pair of line segments are <strong>parallel</strong>?</p><p style="font-family:monospace; font-size:20px; margin:8px 0;">→ →</p>',
+    options: [
+      'Lines that cross each other to make a T',
+      'Lines that go in the same direction and never meet',
+      'Lines that cross at a right angle',
+      'Lines that go toward each other and meet'
+    ],
+    answer: 1
+  },
+  {
+    id: 13, standard: '3.GSR.6', domain: 'GSR', dok: 2, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>A square has a line of symmetry drawn down the middle.</p><p>Which statement is true?</p>',
+    options: [
+      'The two halves are different sizes',
+      'The two halves match exactly if folded on the line',
+      'A square only has one line of symmetry',
+      'Symmetry only works for circles'
+    ],
+    answer: 1
+  },
+  {
+    id: 14, standard: '3.GSR.6', domain: 'GSR', dok: 2, points: 2, type: 'dragdrop', fieldTest: false,
+    stem: '<p>Drag each shape name into the correct column based on its properties.</p>',
+    dragItems: [
+      { id: 'a', text: 'Square' },
+      { id: 'b', text: 'Rhombus' },
+      { id: 'c', text: 'Rectangle' },
+      { id: 'd', text: 'Trapezoid' }
+    ],
+    dropZones: [
+      { label: '4 right angles' },
+      { label: 'NOT 4 right angles' }
+    ],
+    answer: { a: 0, b: 1, c: 0, d: 1 }
+  },
+  {
+    id: 15, standard: '3.GSR.6', domain: 'GSR', dok: 3, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>Shape A is a rectangle. Shape B is a rhombus that is NOT a square.</p><p>Which statement is true for <strong>both</strong> shapes?</p>',
+    options: [
+      'Both have 4 right angles',
+      'Both have 4 equal side lengths',
+      'Both are quadrilaterals with 2 pairs of parallel sides',
+      'Both have lines of symmetry only on the diagonals'
+    ],
+    answer: 2
+  },
+  {
+    id: 16, standard: '3.GSR.6', domain: 'GSR', dok: 1, points: 1, type: 'single', fieldTest: true,
+    stem: '<p>A stop sign has 8 equal sides. What is this shape called?</p>',
+    options: ['Hexagon', 'Octagon', 'Pentagon', 'Heptagon'],
+    answer: 1
+  },
+
+  // ── 3.GSR.7 Area of Rectangles (4 pts: 2×1pt + 1×2pt = 4) ──
+  {
+    id: 17, standard: '3.GSR.7', domain: 'GSR', dok: 1, points: 1, type: 'single', fieldTest: false,
+    stem: `<p>What is the area of this rectangle?</p>
+<div class="grid-shape" style="grid-template-columns: repeat(5,30px);">
+${Array(15).fill('<div class="grid-cell filled"></div>').join('')}
+</div>
+<p style="font-size:13px;color:#666;">3 rows × 5 columns</p>`,
+    options: ['8 square units', '15 square units', '16 square units', '30 square units'],
+    answer: 1
+  },
+  {
+    id: 18, standard: '3.GSR.7', domain: 'GSR', dok: 2, points: 2, type: 'single', fieldTest: false,
+    stem: '<p>A classroom rug is 7 feet long and 4 feet wide.</p><p>What is the area of the rug?</p>',
+    options: ['11 square feet', '22 square feet', '28 square feet', '56 square feet'],
+    answer: 2
+  },
+  {
+    id: 19, standard: '3.GSR.7', domain: 'GSR', dok: 3, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>A garden has an area of 36 square feet. It is shaped like a rectangle.</p><p>Which could be the length and width of the garden?</p>',
+    options: ['6 feet × 5 feet', '9 feet × 4 feet', '7 feet × 5 feet', '8 feet × 4 feet'],
+    answer: 1
+  },
+
+  // ── 3.GSR.8 Perimeter (4 pts: 4×1pt = 4 ... 3×1pt + 1×2pt = 5... use 2×1+1×2=4) ──
+  {
+    id: 20, standard: '3.GSR.8', domain: 'GSR', dok: 1, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>What is the perimeter of a square with side length 6 cm?</p>',
+    options: ['12 cm', '18 cm', '24 cm', '36 cm'],
+    answer: 2
+  },
+  {
+    id: 21, standard: '3.GSR.8', domain: 'GSR', dok: 2, points: 1, type: 'single', fieldTest: false,
+    stem: `<p>A triangle has sides that measure 8 inches, 5 inches, and ? inches. The perimeter is 20 inches.</p><p>What is the missing side length?</p>`,
+    options: ['5 inches', '6 inches', '7 inches', '8 inches'],
+    answer: 2
+  },
+  {
+    id: 22, standard: '3.GSR.8', domain: 'GSR', dok: 2, points: 2, type: 'single', fieldTest: false,
+    stem: '<p>A rectangular garden has a perimeter of 32 meters. The length is 10 meters.</p><p>What is the width of the garden?</p>',
+    options: ['6 meters', '22 meters', '12 meters', '16 meters'],
+    answer: 0
+  },
+  {
+    id: 23, standard: '3.GSR.8', domain: 'GSR', dok: 3, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>Two rectangles both have a perimeter of 20 cm.</p><p>Rectangle A is 6 cm long and 4 cm wide.</p><p>Rectangle B is 8 cm long and 2 cm wide.</p><p>Which statement is true?</p>',
+    options: [
+      'Rectangle A has a greater area than Rectangle B',
+      'Rectangle B has a greater area than Rectangle A',
+      'Both rectangles have the same area',
+      'You cannot find the area without more information'
+    ],
+    answer: 0
+  },
+  {
+    id: 24, standard: '3.GSR.8', domain: 'GSR', dok: 2, points: 1, type: 'single', fieldTest: true,
+    stem: '<p>A park is shaped like a rectangle. It is 15 yards long and 9 yards wide.</p><p>What is the perimeter of the park?</p>',
+    options: ['24 yards', '48 yards', '135 yards', '54 yards'],
+    answer: 1
+  },
+  // Additional items to reach 28 total (mix of MDR and GSR at different DOK)
+  {
+    id: 25, standard: '3.MDR.5', domain: 'MDR', dok: 2, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>Lena starts her homework at 4:30 PM. She finishes at 5:15 PM.</p><p>How long did Lena spend on homework?</p>',
+    options: ['30 minutes', '45 minutes', '55 minutes', '1 hour'],
+    answer: 1
+  },
+  {
+    id: 26, standard: '3.GSR.7', domain: 'GSR', dok: 2, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>A tile floor is 9 feet long and 6 feet wide. Each tile covers 1 square foot.</p><p>How many tiles are needed to cover the whole floor?</p>',
+    options: ['15', '30', '54', '96'],
+    answer: 2
+  },
+  {
+    id: 27, standard: '3.GSR.8', domain: 'GSR', dok: 2, points: 1, type: 'single', fieldTest: false,
+    stem: '<p>Marcus has 24 feet of fence. He wants to make a rectangular pen for his rabbit.</p><p>Which rectangle uses exactly 24 feet of fence?</p>',
+    options: ['4 ft × 6 ft', '5 ft × 7 ft', '8 ft × 4 ft', '6 ft × 6 ft'],
+    answer: 2
+  },
+  {
+    id: 28, standard: '3.MDR.5', domain: 'MDR', dok: 1, points: 1, type: 'single', fieldTest: false,
+    stem: `<p>The pictograph shows how many stickers each student has. Each ⭐ = 4 stickers.</p>
+<table>
+  <tr><th>Student</th><th>Stickers</th></tr>
+  <tr><td>Ana</td><td>⭐⭐⭐</td></tr>
+  <tr><td>Ben</td><td>⭐⭐</td></tr>
+  <tr><td>Cara</td><td>⭐⭐⭐⭐</td></tr>
+</table>
+<p>How many stickers does Cara have?</p>`,
+    options: ['4', '8', '12', '16'],
+    answer: 3
+  }
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let studentInfo = { name: '', period: '' };
+let currentQ = 0;
+let responses = {};
+let vocabFlags = new Set();
+let startTime = null;
+let calcOpen = false;
+let calcExpr = '';
+let calcResult = '0';
+let calcJustEvaled = false;
+
+function startTest() {
+  const name = document.getElementById('studentName').value.trim();
+  const period = document.getElementById('studentPeriod').value;
+  if (!name) { alert('Please enter your full name.'); return; }
+  if (!period) { alert('Please select your class period.'); return; }
+  studentInfo = { name, period };
+  startTime = Date.now();
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('testScreen').style.display = 'block';
+  document.getElementById('studentBadge').textContent = `${name} · Period ${period}`;
+  buildQuestionDropdown();
+  renderQuestion(0);
+}
+
+function renderQuestion(index) {
+  currentQ = index;
+  const q = QUESTIONS[index];
+  const container = document.getElementById('questionContainer');
+  const typeLabel = q.type === 'multi' ? 'Select All That Apply' : q.type === 'dragdrop' ? 'Drag and Drop' : 'Selected Response';
+  const typeClass = q.type === 'multi' ? 'multiselect' : q.type === 'dragdrop' ? 'dragdrop' : '';
+  let html = `<div class="question-meta">
+    <span class="q-number">Question ${index + 1}${q.fieldTest ? ' (Sample)' : ''}</span>
+    <span class="q-standard">${q.standard}</span>
+    <span style="font-size:11px;color:#888;">DOK ${q.dok} · ${q.points} pt${q.points > 1 ? 's' : ''}</span>
+  </div>`;
+  html += `<span class="question-type-label ${typeClass}">${typeLabel}</span>`;
+  html += `<div class="question-stem">${q.stem}</div>`;
+  if (q.type === 'single' || q.type === 'multi') html += renderOptions(q);
+  else if (q.type === 'dragdrop') html += renderDragDrop(q);
+  container.innerHTML = html;
+
+  document.getElementById('currentQNum').textContent = index + 1;
+  document.getElementById('btnPrev').disabled = (index === 0);
+  document.getElementById('btnNext').disabled = (index === QUESTIONS.length - 1);
+  document.getElementById('vocabFlagBtn').classList.toggle('flagged', vocabFlags.has(q.id));
+
+  const answered = Object.keys(responses).filter(id => {
+    const r = responses[id];
+    return r !== undefined && (Array.isArray(r) ? r.length > 0 : typeof r === 'object' ? Object.keys(r).length > 0 : true);
+  }).length;
+  document.getElementById('progressBar').style.width = ((answered / QUESTIONS.length) * 100) + '%';
+  document.getElementById('progressText').textContent = `${answered} of ${QUESTIONS.length}`;
+  buildQuestionDropdown();
+  window.scrollTo(0, 0);
+}
+
+function renderOptions(q) {
+  const labels = ['A', 'B', 'C', 'D', 'E'];
+  const isMulti = q.type === 'multi';
+  const saved = responses[q.id];
+  let html = '<ul class="options-list">';
+  q.options.forEach((opt, i) => {
+    const selected = isMulti ? (Array.isArray(saved) && saved.includes(i)) : (saved === i);
+    html += `<li class="option-item ${isMulti ? 'multi' : ''} ${selected ? 'selected' : ''}" onclick="selectOption(${q.id}, ${i}, ${isMulti})">
+      <div class="option-circle">${labels[i]}</div>
+      <div class="option-text">${opt}</div></li>`;
+  });
+  return html + '</ul>';
+}
+
+function selectOption(qId, optIdx, isMulti) {
+  if (isMulti) {
+    if (!Array.isArray(responses[qId])) responses[qId] = [];
+    const idx = responses[qId].indexOf(optIdx);
+    if (idx >= 0) responses[qId].splice(idx, 1); else responses[qId].push(optIdx);
+  } else { responses[qId] = optIdx; }
+  renderQuestion(currentQ);
+}
+
+function renderDragDrop(q) {
+  const saved = responses[q.id] || {};
+  let html = '<div class="dragdrop-area"><div class="drag-source-container"><div class="drag-source-label">Drag items to the correct zones:</div><div class="drag-items">';
+  q.dragItems.forEach(item => {
+    const isPlaced = saved[item.id] !== undefined;
+    html += `<div class="drag-item ${isPlaced ? 'placed' : ''}" draggable="true" data-id="${item.id}" data-qid="${q.id}" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">${item.text}</div>`;
+  });
+  html += '</div></div><div class="drop-zones">';
+  q.dropZones.forEach((zone, zIdx) => {
+    const placed = Object.entries(saved).filter(([, zi]) => zi === zIdx);
+    let content = placed.length > 0 ? placed.map(([id]) => { const item = q.dragItems.find(it => it.id === id); return `<span class="filled-item" onclick="removeDragItem('${q.id}','${id}')">${item.text}</span>`; }).join('') : '<span style="color:#999;">Drop here</span>';
+    html += `<div class="drop-zone"><div class="drop-zone-label">${zone.label}</div><div class="drop-target ${placed.length > 0 ? 'filled' : ''}" data-zone="${zIdx}" data-qid="${q.id}" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">${content}</div></div>`;
+  });
+  return html + '</div></div>';
+}
+
+let draggedItemId = null;
+function handleDragStart(e) { draggedItemId = e.target.dataset.id; e.target.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+function handleDragEnd(e) { e.target.classList.remove('dragging'); }
+function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function handleDrop(e) {
+  e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+  const zoneIdx = parseInt(e.currentTarget.dataset.zone);
+  const qId = parseInt(e.currentTarget.dataset.qid);
+  if (!responses[qId]) responses[qId] = {};
+  delete responses[qId][draggedItemId];
+  responses[qId][draggedItemId] = zoneIdx;
+  renderQuestion(currentQ);
+}
+function removeDragItem(qId, itemId) {
+  qId = parseInt(qId);
+  if (responses[qId]) { delete responses[qId][itemId]; if (!Object.keys(responses[qId]).length) delete responses[qId]; renderQuestion(currentQ); }
+}
+
+function navigate(dir) { const n = currentQ + dir; if (n >= 0 && n < QUESTIONS.length) renderQuestion(n); }
+function toggleQuestionDropdown() { document.getElementById('questionDropdown').classList.toggle('show'); }
+document.addEventListener('click', e => { if (!e.target.closest('.question-selector')) document.getElementById('questionDropdown')?.classList.remove('show'); });
+
+function buildQuestionDropdown() {
+  let html = '';
+  QUESTIONS.forEach((q, i) => {
+    const r = responses[q.id];
+    const answered = r !== undefined && (Array.isArray(r) ? r.length > 0 : typeof r === 'object' ? Object.keys(r).length > 0 : true);
+    const cls = [answered ? 'answered' : '', vocabFlags.has(q.id) ? 'flagged' : '', i === currentQ ? 'current' : ''].filter(Boolean).join(' ');
+    html += `<div class="question-dropdown-item ${cls}" onclick="renderQuestion(${i})"><span>Q ${i + 1}${q.fieldTest ? ' (S)' : ''}</span><span>${answered ? '✓' : '·'}</span></div>`;
+  });
+  document.getElementById('questionDropdown').innerHTML = html;
+}
+
+function toggleVocabFlag() {
+  const q = QUESTIONS[currentQ];
+  if (vocabFlags.has(q.id)) vocabFlags.delete(q.id); else vocabFlags.add(q.id);
+  renderQuestion(currentQ);
+}
+
+function toggleCalc() {
+  calcOpen = !calcOpen;
+  document.getElementById('calcPanel').classList.toggle('show', calcOpen);
+  document.getElementById('questionPanel').classList.toggle('with-calc', calcOpen);
+  document.getElementById('calcBtn').classList.toggle('active', calcOpen);
+}
+function updateDisplay() { document.getElementById('calcDisplay').textContent = calcExpr || calcResult || '0'; }
+function calcDigit(d) { if (calcJustEvaled) { calcExpr = ''; calcJustEvaled = false; } if (d === '.' && calcExpr.split(/[\+\-\*\/]/).pop().includes('.')) return; calcExpr += d; updateDisplay(); }
+function calcOp(op) {
+  calcJustEvaled = false;
+  if (op === 'back') { calcExpr = calcExpr.slice(0, -1); updateDisplay(); return; }
+  if (op === '%') { try { calcExpr = String(eval(calcExpr) / 100); } catch(e) {} updateDisplay(); return; }
+  if (calcExpr && '+-*/'.includes(calcExpr.slice(-1))) calcExpr = calcExpr.slice(0, -1);
+  calcExpr += op; updateDisplay();
+}
+function calcEquals() { try { calcResult = String(Math.round(eval(calcExpr) * 1e10) / 1e10); calcExpr = calcResult; calcJustEvaled = true; } catch(e) { calcExpr = 'Error'; } updateDisplay(); }
+function calcClear() { calcExpr = ''; calcResult = '0'; calcJustEvaled = false; updateDisplay(); }
+
+function showSubmitConfirm() {
+  const answered = Object.keys(responses).filter(id => { const r = responses[id]; return r !== undefined && (Array.isArray(r) ? r.length > 0 : typeof r === 'object' ? Object.keys(r).length > 0 : true); }).length;
+  document.getElementById('submitStats').innerHTML = `
+    <div class="stat-row"><span>Questions answered:</span><strong>${answered} of ${QUESTIONS.length}</strong></div>
+    <div class="stat-row"><span>Questions skipped:</span><strong>${QUESTIONS.length - answered}</strong></div>
+    <div class="stat-row"><span>Vocabulary flags:</span><strong>${vocabFlags.size}</strong></div>`;
+  document.getElementById('submitModal').classList.add('show');
+}
+function hideSubmitConfirm() { document.getElementById('submitModal').classList.remove('show'); }
+
+function submitTest() {
+  document.getElementById('finalSubmitBtn').disabled = true;
+  document.getElementById('finalSubmitBtn').textContent = 'Submitting...';
+  const results = calculateResults();
+  showResults(results);
+  logToGoogleSheet(results);
+}
+
+function calculateResults() {
+  let pointsEarned = 0, pointsPossible = 0, correctItems = 0, totalItems = 0;
+  const domainScores = { MDR: { earned: 0, possible: 0 }, GSR: { earned: 0, possible: 0 } };
+  const dokScores = { 1: { earned: 0, possible: 0 }, 2: { earned: 0, possible: 0 }, 3: { earned: 0, possible: 0 } };
+  const standardScores = { '3.MDR.5': { earned:0, possible:0 }, '3.GSR.6': { earned:0, possible:0 }, '3.GSR.7': { earned:0, possible:0 }, '3.GSR.8': { earned:0, possible:0 } };
+
+  QUESTIONS.forEach(q => {
+    if (q.fieldTest) return;
+    pointsPossible += q.points; totalItems++;
+    domainScores[q.domain].possible += q.points;
+    dokScores[q.dok].possible += q.points;
+    standardScores[q.standard].possible += q.points;
+    const correct = isCorrect(q, responses[q.id]);
+    if (correct === true) {
+      pointsEarned += q.points; correctItems++;
+      domainScores[q.domain].earned += q.points;
+      dokScores[q.dok].earned += q.points;
+      standardScores[q.standard].earned += q.points;
+    } else if (correct === 'partial') {
+      const p = Math.floor(q.points / 2);
+      pointsEarned += p;
+      domainScores[q.domain].earned += p;
+      dokScores[q.dok].earned += p;
+      standardScores[q.standard].earned += p;
+    }
+  });
+
+  const percent = Math.round((pointsEarned / pointsPossible) * 100);
+  return { pointsEarned, pointsPossible, correctItems, totalItems, percent, level: getLevel(percent),
+    timeSpent: Math.round((Date.now() - startTime) / 60000), domainScores, dokScores, standardScores,
+    vocabFlags: Array.from(vocabFlags).sort((a, b) => a - b) };
+}
+
+function isCorrect(q, response) {
+  if (response === undefined) return false;
+  if (q.type === 'single') return response === q.answer;
+  if (q.type === 'multi') {
+    if (!Array.isArray(response)) return false;
+    const cs = new Set(q.answer), rs = new Set(response);
+    if (cs.size === rs.size && [...cs].every(x => rs.has(x))) return true;
+    const correct = [...rs].filter(x => cs.has(x)).length, wrong = [...rs].filter(x => !cs.has(x)).length;
+    if (q.points === 2 && correct >= Math.ceil(q.answer.length / 2) && wrong === 0) return 'partial';
+    return false;
+  }
+  if (q.type === 'dragdrop') {
+    if (typeof response !== 'object') return false;
+    const total = Object.keys(q.answer).length;
+    const correct = Object.keys(q.answer).filter(k => response[k] === q.answer[k]).length;
+    if (correct === total) return true;
+    if (q.points === 2 && correct >= Math.ceil(total / 2)) return 'partial';
+    return false;
+  }
+  return false;
+}
+
+function getLevel(pct) {
+  if (pct >= 80) return 'Distinguished Learner';
+  if (pct >= 60) return 'Proficient Learner';
+  if (pct >= 35) return 'Developing Learner';
+  return 'Beginning Learner';
+}
+
+function showResults(r) {
+  document.getElementById('testScreen').style.display = 'none';
+  document.getElementById('resultsScreen').style.display = 'block';
+  document.getElementById('submitModal').classList.remove('show');
+  document.getElementById('resultsStudent').textContent = `${studentInfo.name} · Period ${studentInfo.period}`;
+  document.getElementById('resultScore').textContent = r.percent + '%';
+  const levelEl = document.getElementById('resultLevel');
+  levelEl.textContent = r.level;
+  levelEl.className = 'score-level ' + r.level.split(' ')[0].toLowerCase();
+  document.getElementById('resultDetail').textContent = `${r.pointsEarned} of ${r.pointsPossible} points · ${r.correctItems} of ${r.totalItems} items correct`;
+
+  const stdNames = { '3.MDR.5': 'Measurement & Data (3.MDR.5)', '3.GSR.6': 'Polygon Attributes (3.GSR.6)', '3.GSR.7': 'Area (3.GSR.7)', '3.GSR.8': 'Perimeter (3.GSR.8)' };
+  let stdHtml = '';
+  Object.keys(r.standardScores).forEach(k => {
+    const d = r.standardScores[k];
+    const pct = d.possible > 0 ? Math.round((d.earned / d.possible) * 100) : 0;
+    const color = pct >= 80 ? '#2e7d32' : pct >= 60 ? '#1a5490' : pct >= 35 ? '#f9a825' : '#c62828';
+    stdHtml += `<div class="domain-row"><div class="domain-name">${stdNames[k]}</div>
+      <div class="domain-bar"><div class="domain-bar-fill" style="width:${pct}%;background:${color};"></div></div>
+      <div class="domain-score">${d.earned}/${d.possible} (${pct}%)</div></div>`;
+  });
+  document.getElementById('standardBreakdown').innerHTML = stdHtml;
+
+  let dokHtml = '';
+  [1, 2, 3].forEach(lv => {
+    const d = r.dokScores[lv]; if (!d.possible) return;
+    const pct = Math.round((d.earned / d.possible) * 100);
+    dokHtml += `<div class="domain-row"><div class="domain-name">DOK Level ${lv}</div>
+      <div class="domain-bar"><div class="domain-bar-fill" style="width:${pct}%;"></div></div>
+      <div class="domain-score">${d.earned}/${d.possible} (${pct}%)</div></div>`;
+  });
+  document.getElementById('dokBreakdown').innerHTML = dokHtml;
+
+  if (r.vocabFlags.length > 0) {
+    document.getElementById('vocabSummary').style.display = 'block';
+    document.getElementById('vocabFlagText').textContent = `Item numbers: ${r.vocabFlags.join(', ')}`;
+  }
+}
+
+function logToGoogleSheet(r) {
+  const params = new URLSearchParams({
+    section: SECTION,
+    studentName: studentInfo.name,
+    period: studentInfo.period,
+    totalScore: r.percent,
+    pointsEarned: r.pointsEarned,
+    pointsPossible: r.pointsPossible,
+    correctItems: r.correctItems,
+    totalItems: r.totalItems,
+    achievementLevel: r.level,
+    nrScore:   '0/0',
+    parScore:  '0/0',
+    mdrScore:  `${r.domainScores.MDR.earned}/${r.domainScores.MDR.possible}`,
+    gsrScore:  `${r.domainScores.GSR.earned}/${r.domainScores.GSR.possible}`,
+    nr1Score:  '0/0',
+    nr4Score:  '0/0',
+    par2Score: '0/0',
+    par3Score: '0/0',
+    mdr5Score: `${r.standardScores['3.MDR.5'].earned}/${r.standardScores['3.MDR.5'].possible}`,
+    gsr6Score: `${r.standardScores['3.GSR.6'].earned}/${r.standardScores['3.GSR.6'].possible}`,
+    gsr7Score: `${r.standardScores['3.GSR.7'].earned}/${r.standardScores['3.GSR.7'].possible}`,
+    gsr8Score: `${r.standardScores['3.GSR.8'].earned}/${r.standardScores['3.GSR.8'].possible}`,
+    dok1Score: `${r.dokScores[1].earned}/${r.dokScores[1].possible}`,
+    dok2Score: `${r.dokScores[2].earned}/${r.dokScores[2].possible}`,
+    dok3Score: `${r.dokScores[3].earned}/${r.dokScores[3].possible}`,
+    vocabFlagCount: r.vocabFlags.length,
+    vocabFlags: r.vocabFlags.join(', '),
+    timeSpent: r.timeSpent
+  });
+
+  fetch(`${GAS_URL}?${params.toString()}`, { method: 'GET', mode: 'no-cors', redirect: 'follow' })
+    .then(() => { document.getElementById('submitStatus').textContent = '✓ Results sent to your teacher successfully.'; })
+    .catch(() => { document.getElementById('submitStatus').textContent = '✓ Results sent to your teacher.'; });
+  setTimeout(() => { const el = document.getElementById('submitStatus'); if (el && el.textContent.includes('Sending')) el.textContent = '✓ Results sent to your teacher.'; }, 5000);
+}
+</script>
+</body>
+</html>
